@@ -3,15 +3,16 @@ package service
 import (
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/jinzhu/now"
 	"github.com/kbgod/coinbot/internal/entity"
 	"github.com/kbgod/coinbot/internal/valueobject"
 	"github.com/kbgod/coinbot/pkg/randomizer"
 	"github.com/kbgod/illuminate"
 	"gorm.io/gorm"
-	"strconv"
-	"strings"
-	"time"
 )
 
 func (s *Service) GetUser(tgUser *illuminate.User, isPrivate bool, promo *string) (*entity.User, error) {
@@ -29,9 +30,10 @@ func (s *Service) GetUser(tgUser *illuminate.User, isPrivate bool, promo *string
 		if tgUser.Username != user.Username {
 			mustUpdate["username"] = tgUser.Username
 		}
-		if tgUser.LanguageCode != user.LanguageCode {
+		if tgUser.LanguageCode != "" && tgUser.LanguageCode != user.LanguageCode {
 			mustUpdate["language_code"] = tgUser.LanguageCode
 		}
+
 		if len(mustUpdate) > 0 {
 			if err := s.db.Model(&entity.User{}).Where("id", user.ID).Updates(mustUpdate).Error; err != nil {
 				return nil, fmt.Errorf("update user: %w", err)
@@ -311,9 +313,6 @@ func (s *Service) GetReferralsCount(user *entity.User) (int64, error) {
 }
 
 func (s *Service) UpdateUserStoppedStatus(user *entity.User, stopped bool) error {
-	if !stopped {
-		return nil
-	}
 	var stoppedAt *time.Time
 	if stopped {
 		stoppedAt = new(time.Time)
