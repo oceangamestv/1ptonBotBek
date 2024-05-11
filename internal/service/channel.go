@@ -12,7 +12,7 @@ import (
 
 func (s *Service) CreateOrUpdateChannel(chat *illuminate.Chat, stopped bool) (*entity.Channel, error) {
 	channelEntity := entity.Channel{
-		ID:    chat.ID,
+		ID:    chat.Id,
 		Title: chat.Title,
 	}
 	if stopped {

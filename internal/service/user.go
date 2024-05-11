@@ -15,23 +15,30 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) GetUser(tgUser *illuminate.User, isPrivate bool, promo *string) (*entity.User, error) {
+type GetUserOptions struct {
+	TgUser    *illuminate.User
+	IsPrivate bool
+	Promo     *string
+	AvatarURL *string
+}
+
+func (s *Service) GetUser(opts *GetUserOptions) (*entity.User, error) {
 	var user entity.User
-	if err := s.db.Take(&user, tgUser.ID).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+	if err := s.db.Take(&user, opts.TgUser.Id).Error; err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, fmt.Errorf("get user: %w", err)
 	} else if err == nil {
 		mustUpdate := make(map[string]any)
-		if isPrivate && user.StoppedAt != nil {
+		if opts.IsPrivate && user.StoppedAt != nil {
 			mustUpdate["stopped_at"] = nil
 		}
-		if tgUser.FirstName != user.FirstName {
-			mustUpdate["first_name"] = tgUser.FirstName
+		if opts.TgUser.FirstName != user.FirstName {
+			mustUpdate["first_name"] = opts.TgUser.FirstName
 		}
-		if tgUser.Username != user.Username {
-			mustUpdate["username"] = tgUser.Username
+		if opts.TgUser.Username != user.Username {
+			mustUpdate["username"] = opts.TgUser.Username
 		}
-		if tgUser.LanguageCode != "" && tgUser.LanguageCode != user.LanguageCode {
-			mustUpdate["language_code"] = tgUser.LanguageCode
+		if opts.TgUser.LanguageCode != "" && opts.TgUser.LanguageCode != user.LanguageCode {
+			mustUpdate["language_code"] = opts.TgUser.LanguageCode
 		}
 
 		if len(mustUpdate) > 0 {
@@ -43,14 +50,14 @@ func (s *Service) GetUser(tgUser *illuminate.User, isPrivate bool, promo *string
 		return &user, nil
 	}
 
-	user.ID = tgUser.ID
-	user.FirstName = tgUser.FirstName
-	user.Username = tgUser.Username
-	user.LanguageCode = tgUser.LanguageCode
+	user.ID = opts.TgUser.Id
+	user.FirstName = opts.TgUser.FirstName
+	user.Username = opts.TgUser.Username
+	user.LanguageCode = opts.TgUser.LanguageCode
 
-	if promo != nil {
-		if strings.HasPrefix(*promo, "r_") {
-			refererID, err := strconv.ParseInt(strings.TrimPrefix(*promo, "r_"), 10, 64)
+	if opts.Promo != nil {
+		if strings.HasPrefix(*opts.Promo, "r_") {
+			refererID, err := strconv.ParseInt(strings.TrimPrefix(*opts.Promo, "r_"), 10, 64)
 			if err == nil {
 				user.RefererID = &refererID
 			}
@@ -61,7 +68,7 @@ func (s *Service) GetUser(tgUser *illuminate.User, isPrivate bool, promo *string
 				return nil, fmt.Errorf("update referer balance: %w", err)
 			}
 		} else {
-			p, err := entity.GetPromoByName(s.db, *promo)
+			p, err := entity.GetPromoByName(s.db, *opts.Promo)
 			if err != nil {
 				return nil, fmt.Errorf("get promo by name: %w", err)
 			}
@@ -133,11 +140,14 @@ func (s *Service) AuthorizeByWebApp(user *entity.User) error {
 	//	return fmt.Errorf("get user: %w", err)
 	//}
 
-	u, err := s.GetUser(&illuminate.User{
-		ID:        user.ID,
-		FirstName: user.FirstName,
-		Username:  user.Username,
-	}, true, nil)
+	u, err := s.GetUser(&GetUserOptions{
+		TgUser: &illuminate.User{
+			Id:        user.ID,
+			FirstName: user.FirstName,
+			Username:  user.Username,
+		},
+		IsPrivate: true,
+	})
 	if err != nil {
 		return fmt.Errorf("get user: %w", err)
 	}

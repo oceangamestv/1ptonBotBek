@@ -17,7 +17,7 @@ func (h *Handler) PrepareMessage(ctx *router.Context) error {
 	//	ReplyMarkup: menu,
 	//})
 	if err := h.svc.SetUserBotState(
-		getUserFromContext(ctx.Context), "sending", NewSendingMessage(ctx.Update.Message.MessageID),
+		getUserFromContext(ctx.Context), "sending", NewSendingMessage(ctx.Update.Message.MessageId),
 	); err != nil {
 		return ctx.AnswerAlertVoid(err.Error())
 	}
@@ -130,7 +130,7 @@ func (h *Handler) Send(ctx *router.Context) error {
 	sendingMessageChan <- SendingMessageTask{
 		SendingMessage:   sendingMessage,
 		AdminChatID:      ctx.ChatID(),
-		ReplyToMessageID: ctx.Message().MessageID,
+		ReplyToMessageID: ctx.Message().MessageId,
 	}
 
 	_ = ctx.AnswerAlertVoid("Sending started")
@@ -226,7 +226,7 @@ func (h *Handler) StartSenderWorker() {
 				), &illuminate.SendMessageOpts{
 					ParseMode: illuminate.ParseModeHTML,
 					ReplyParameters: &illuminate.ReplyParameters{
-						MessageID: sm.ReplyToMessageID,
+						MessageId: sm.ReplyToMessageID,
 					},
 				})
 			}(sm)

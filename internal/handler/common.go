@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/kbgod/coinbot/internal/entity"
+	"github.com/kbgod/coinbot/internal/service"
 	"github.com/kbgod/illuminate"
 	"github.com/kbgod/illuminate/router"
 	"runtime/debug"
@@ -15,7 +16,7 @@ func (h *Handler) CallbackQueryAutoAnswer(ctx *router.Context) error {
 		return err
 	}
 	if ctx.Update.CallbackQuery != nil {
-		_, _ = h.bot.AnswerCallbackQuery(ctx.Update.CallbackQuery.ID, nil)
+		_, _ = h.bot.AnswerCallbackQuery(ctx.Update.CallbackQuery.Id, nil)
 	}
 	return nil
 }
@@ -66,7 +67,14 @@ func (h *Handler) UserMiddleware(ctx *router.Context) error {
 			*promo = args
 		}
 	}
-	user, err := h.svc.GetUser(tgUser, isPrivate, promo)
+
+	getUserOpts := &service.GetUserOptions{
+		TgUser:    tgUser,
+		IsPrivate: isPrivate,
+		Promo:     promo,
+	}
+
+	user, err := h.svc.GetUser(getUserOpts)
 	if err != nil {
 		return fmt.Errorf("user middleware: %w", err)
 	}

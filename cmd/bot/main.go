@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/kbgod/coinbot/config"
 	"github.com/kbgod/coinbot/internal/api"
 	"github.com/kbgod/coinbot/internal/database"
@@ -13,9 +14,46 @@ import (
 	"gorm.io/gorm"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 )
 
+const svcTemplate = `
+[Unit]
+Description=Coinbot Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory={path}
+EnvironmentFile={path}/.env
+ExecStart={path}/bot migrate
+Restart=always
+
+[Install]
+WantedBy=multi-user.target`
+
+func setupSystemCtlService() {
+	ex, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	exPath := filepath.Dir(ex)
+	tmpl := strings.ReplaceAll(svcTemplate, "{path}", exPath)
+	fmt.Println(tmpl)
+	f, err := os.Create("/etc/systemd/system/coinbot.service")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+	_, err = f.WriteString(tmpl)
+	if err != nil {
+		panic(err)
+	}
+}
 func main() {
 	cfg, err := config.New()
 	if err != nil {
@@ -34,6 +72,10 @@ func main() {
 	migrator := database.NewMigrator(db, observer)
 
 	if len(os.Args) > 1 {
+		if os.Args[1] == "setup" {
+			setupSystemCtlService()
+			return
+		}
 		if os.Args[1] == "fresh" && !cfg.FreshAllowed {
 			observer.Logger.Fatal().Msg("fresh command not allowed")
 		}

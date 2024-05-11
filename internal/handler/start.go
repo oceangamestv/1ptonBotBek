@@ -9,17 +9,17 @@ import (
 )
 
 var startMenuText = map[string]string{
-	"en": "🍍 Hello %s, I'm <b>%s</b>\n" +
+	"en": "Hello %s, I'm <b>%s</b>\n" +
 		"News: %s\n" +
 		"Tap on the coin and watch your balance grow.\n\n" +
 		"<b>🪙 Your coins:</b> %d\n" +
 		"<b>💵 Your balance:</b> <code>$%s</code>",
-	"ru": "🍍 Привет %s, я <b>%s</b>\n" +
+	"ru": "Привет %s, я <b>%s</b>\n" +
 		"Новости: %s\n" +
 		"Коснитесь монеты и наблюдайте, как растет ваш баланс.\n\n" +
 		"<b>🪙 Ваши монеты:</b> %d\n" +
 		"<b>💵 Ваш баланс:</b> <code>$%s</code>",
-	"uk": "🍍 Привіт %s, я <b>%s</b>\n" +
+	"uk": "Привіт %s, я <b>%s</b>\n" +
 		"Новини: %s\n" +
 		"Торкніться монети і спостерігайте, як зростає ваш баланс.\n\n" +
 		"<b>🪙 Монети:</b> %d\n" +
@@ -33,9 +33,18 @@ var premiumText = map[string]string{
 }
 
 var mineButtonText = map[string]string{
-	"en": "⛏ Let's mine",
-	"ru": "⛏ Начать майнить",
-	"uk": "⛏ Почати майнити",
+	"en": "🕹 Play",
+	"ru": "🕹 Играть",
+	"uk": "🕹 Грати",
+	"tr": "🕹 Oyna",
+	"es": "🕹 Jugar",
+	"de": "🕹 Spielen",
+	"fr": "🕹 Jouer",
+	"it": "🕹 Giocare",
+	"pt": "🕹 Jogar",
+	"nl": "🕹 Spelen",
+	"pl": "🕹 Grać",
+	"ro": "🕹 Jucați",
 }
 
 var premiumButtonText = map[string]string{
@@ -109,8 +118,8 @@ func (h *Handler) ChatMember(ctx *router.Context) error {
 	newChatMemberStatus := ctx.Update.ChatMember.NewChatMember.GetStatus()
 	newChatMemberUser := ctx.Update.ChatMember.NewChatMember.GetUser()
 	reward, err := h.svc.ProcessChannelChatMember(
-		ctx.Update.ChatMember.Chat.ID,
-		newChatMemberUser.ID,
+		ctx.Update.ChatMember.Chat.Id,
+		newChatMemberUser.Id,
 		newChatMemberStatus,
 		ctx.Update.ChatMember.InviteLink,
 	)
@@ -123,7 +132,7 @@ func (h *Handler) ChatMember(ctx *router.Context) error {
 
 	if reward.IsReward {
 		_, _ = h.bot.SendMessage(
-			newChatMemberUser.ID,
+			newChatMemberUser.Id,
 			fmt.Sprintf("💠 Sponsor (%s) reward earned. You received <b>🪙 %d.</b>",
 				reward.Channel.Title, reward.Channel.Reward,
 			),
@@ -132,7 +141,7 @@ func (h *Handler) ChatMember(ctx *router.Context) error {
 			})
 	} else {
 		_, _ = h.bot.SendMessage(
-			newChatMemberUser.ID,
+			newChatMemberUser.Id,
 			fmt.Sprintf("💠 Sponsor (%s) fine received. Your fine <b>🪙 -%d.</b>",
 				reward.Channel.Title, reward.Channel.Reward*2,
 			),
